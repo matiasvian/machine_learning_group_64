@@ -1,0 +1,20 @@
+SKU,Segment,Pack,Product,Brand,Volume
+"_Carlsberg Can 0,45",MainStream,Can,Lager,Carlsberg,0.45
+"_Flash Up Energy PET 0,5",High Margin,PET,Energy-drink,Flash,0.5
+"_Holsten Bottle 0,47",Premium,Bottle,Lager,Holsten,0.5
+"_Tuborg Green Can 0,45",Premium,Can,Lager,Tuborg,0.45
+"_Tuborg Green Bottle 0,48",Premium,Bottle,Lager,Tuborg,0.5
+"_Zatecky Gus Can 0,45",Premium,Can,Lager,Zatecky Gus,0.45
+"_Zatecky Gus Bottle 0,48",Premium,Bottle,Lager,Zatecky Gus,0.5
+"_Zatecky Gus PET 1,42",Premium,PET,Lager,Zatecky Gus,1.5
+"_Baltika №0 Can 0,45",Premium,Can,Non-alco,Baltika №3,0.45
+"_Baltika №3 Can 0,45",MainStream,Can,Lager,Baltika №3,0.45
+"_Baltika №7 Can 0,45",Premium,Can,Lager,Baltika №7,0.45
+"_Baltika №7 Bottle 0,47",Premium,Bottle,Lager,Baltika №7,0.5
+"_Baltika №9 Can 0,45",MainStream,Can,Lager,Baltika №9,0.45
+"_Baltika Cooler Bottle 0,47",MainStream,Bottle,Lager,Baltika Cooler,0.5
+"_Baltika Draught PET 0,47",Premium,PET,Other,Baltika Draught,0.5
+"_Don PET 1,42",MainStream,PET,Other,Don,1.5
+"_Firmennoe PET 1,42",Premium,PET,Other,Firmennoe,1.5
+"_Priazovskoye Bottle 0,47",MainStream,Bottle,Other,Priazovskoye,0.5
+"_Priazovskoye PET 1,42",MainStream,PET,Other,Priazovskoye,1.5
