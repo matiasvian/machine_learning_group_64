@@ -34,6 +34,8 @@ class forecast_model:
         self.stores = pd.read_csv(str(pathlib.Path(__file__).parent.absolute()) + '/data/id_store_sku.csv')      # ts_id,    Store,      SKU
         self.features = pd.read_csv(str(pathlib.Path(__file__).parent.absolute()) + '/data/sku_features.csv')    # SKU,      Segment,    Pack,       Product,    Brand,  Volume
 
+
+    def run(self):
         self.describe()
         self.benchmark()
 
@@ -63,3 +65,4 @@ class forecast_model:
 if __name__ == "__main__":
 
     f = forecast_model()
+    f.run()
