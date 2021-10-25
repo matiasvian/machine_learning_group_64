@@ -7,6 +7,7 @@ import pathlib
 import sklearn
 import statsmodels.tsa.arima.model as arima
 import math
+import lightgbm as lgb
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -45,8 +46,30 @@ class forecast_model:
         self.train_features = self.generate_features(self.train_data, self.features, self.stores)
         self.test_features = self.generate_features(self.test_data, self.features, self.stores)
 
+        self.test_features.to_csv(str(pathlib.Path(__file__).parent.absolute()) + '/data/test_features.csv', index = False)
+        self.train_features.to_csv(str(pathlib.Path(__file__).parent.absolute()) + '/data/train_features.csv', index = False)
+
+        # Generating categories
+        for c in self.test_features.drop(columns = ['Date', 'id']).columns:
+            self.test_features[c] = self.test_features[c].astype('category')
+            self.train_features[c] = self.train_features[c].astype('category')
+
+        # Running regression prediction and arima prediction
+        regression = self.regression(self.train_features, submit = True)
+        # arima = self.arima(submit = False)
+
+        # Average of each row
+        # submit = (regression + arima) / 2
+
+        # Submitting average
+        # self.submit(submit)
+
         # self.describe()
         # self.benchmark()
+        
+        submission = pd.read_csv(str(pathlib.Path(__file__).parent.absolute()) + '/data/sampleSubmission.csv')
+
+        self.plot_pred_vs_true(submission['Sales'], self.train_data['Sales'][-192882:])
 
     def describe(self):
 
@@ -81,24 +104,29 @@ class forecast_model:
         
         :param (q, d, p): order
         :param length: length of future observations
+
+        :return: np.array of predictions
         '''
         
-        y_prev = np.array(self.train_data['Sales'][:-length])
+        y_prev = np.array(self.train_data['Sales'])
 
         # fit model
         model = arima.ARIMA(y_prev, order = (q, d, p))
         model_fit = model.fit()
-        output = model_fit.predict(end=length-1)
+        prediction = model_fit.predict(end=length-1)
 
         # Post processing negative values
-        output = np.array(output)
-        output[output < 0] = 0.2  # Why 0.2? Mean value, but lower
+        prediction = np.array(prediction)
+        prediction[prediction < 0] = 0.2  # Why 0.2? Mean value, but lower
 
-        if submit : self.submit(output)
+        if submit: self.submit(prediction)
+        
+        print('ARIMA RMSE: \n' +
+            f'{self.root_mean_squared_log_error(np.array(self.train_data["Sales"][-length:]), prediction)}')
 
-        return self.root_mean_squared_log_error(np.array(self.train_data['Sales'][-length:]), output)
+        return prediction
 
-    def arima_traverse(self, leap, length = 192882):
+    def arima_traverse(self, leap, length = 192882, submit = True):
         '''
         Will predict *leap* number of predictions at a time and add them to the training pool, rinse repeat
         Doesn't work very well and takes forever to run...
@@ -125,7 +153,6 @@ class forecast_model:
 
             print(f'Prediction length: {len(predictions)}')
             
-        
         # Remainder
         remainder = length - len(predictions)
         model = arima.ARIMA(training, order = (1, 0, 0))
@@ -137,7 +164,7 @@ class forecast_model:
         predictions[predictions < 0] = 0.2  # Why 0.2? Mean value, but lower
         
         # Submitting
-        self.submit(predictions)
+        if submit: self.submit(predictions)
 
         return self.root_mean_squared_log_error(np.array(self.train_data['Sales'][-length:]), predictions)
 
@@ -188,6 +215,46 @@ class forecast_model:
         df['dow_promo'] = df['day_of_week'].astype(str) + df['isPromo'].astype(str)
         
         return df
+
+    def plot_pred_vs_true(self, predictions, true):
+        '''
+        Plot curve of predictions vs actual values
+        '''
+        
+        plt.figure(figsize=(12,5), dpi=100)
+        plt.plot(predictions, label='training')
+        plt.plot(true, label='actual')
+        plt.title('Forecast vs Actuals')
+        plt.legend(loc='upper left', fontsize=8)
+        plt.show()
+
+    def regression(self, train_features, submit = True):
+        '''
+        LGBM regression based on features from introduction notebook.
+        '''
+
+        # TODO: Tweak paramters
+        # Tested lr=0.001, iter=100 -> RMSE = 0.50386
+        # Tested learning_rate=0.05, num_iterations=300 -> RMSE = 0.46746
+        # Also 200 > 100 iterations is better.
+        clf = lgb.LGBMRegressor(num_leaves= 7, max_depth=8, 
+                         random_state=42, 
+                         silent=True, 
+                         metric='rmse', 
+                         n_jobs=-1, 
+                         n_estimators=1000,
+                         colsample_bytree=0.95,
+                         subsample=0.95,
+                         learning_rate=0.05,
+                         num_iterations=300)
+
+        clf.fit(train_features.drop(columns = ['Sales', 'Date']), self.train_data['Sales'])
+
+        prediction = clf.predict(self.test_features.drop(columns = ['id', 'Date']))
+        
+        if submit: self.submit(prediction)
+        
+        return np.array(prediction)
 
 
 if __name__ == "__main__":
